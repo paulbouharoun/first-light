@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>First Light — the sky the moment you arrived</title>
+    <meta name="description" content="Make a print-ready poster of the exact night sky above a place at a moment that mattered." />
+    <meta name="theme-color" content="#efe6d2" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="panel">
+        <header class="masthead">
+          <p class="eyebrow">Plate No. I</p>
+          <h1>First Light</h1>
+          <p class="tagline">The sky the moment you arrived.</p>
+        </header>
+
+        <form id="form" autocomplete="off" novalidate>
+          <fieldset>
+            <legend>The moment</legend>
+            <label class="field">
+              <span>Date</span>
+              <input type="date" id="date" min="1000-01-01" max="2999-12-31" required />
+            </label>
+            <label class="field">
+              <span>Local time</span>
+              <input type="time" id="time" required />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>The place</legend>
+            <div class="search">
+              <input type="text" id="place" placeholder="A town, an address, or “lat, lon”" aria-label="Place" />
+              <button type="button" id="find" class="btn-quiet">Find</button>
+            </div>
+            <ul id="results" class="results" hidden></ul>
+            <p id="placeMeta" class="meta"></p>
+            <p id="placeError" class="error" hidden></p>
+          </fieldset>
+
+          <fieldset>
+            <legend>The inscription</legend>
+            <label class="field wide">
+              <span>Caption</span>
+              <input type="text" id="caption" maxlength="60" placeholder="The sky the moment you arrived" />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>The plate</legend>
+            <div class="themes" id="themes" role="radiogroup" aria-label="Ink and paper"></div>
+            <div class="toggles">
+              <label><input type="checkbox" id="optConst" checked /> Constellation figures</label>
+              <label><input type="checkbox" id="optLabels" checked /> Names</label>
+              <label><input type="checkbox" id="optMw" checked /> Milky Way</label>
+              <label><input type="checkbox" id="optGrid" checked /> Ecliptic &amp; altitude rings</label>
+            </div>
+            <label class="field wide range">
+              <span>Faintest stars <output id="magOut">5.8</output></span>
+              <input type="range" id="mag" min="3.5" max="6" step="0.1" value="5.8" />
+            </label>
+          </fieldset>
+
+          <div class="actions">
+            <button type="button" id="download" class="btn">Download A3 print</button>
+            <p class="meta" id="downloadMeta">PNG · 3508 × 4961 px · 300 dpi</p>
+          </div>
+        </form>
+
+        <footer class="colophon">
+          Positions from <a href="https://github.com/cosinekitty/astronomy">Astronomy Engine</a>, stars &amp;
+          figures from <a href="https://github.com/ofrohn/d3-celestial">d3-celestial</a>, places from
+          <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>.
+          <br />Made by <a href="https://paulbouharoun.com">Paul Bouharoun</a> ·
+          <a href="https://github.com/paulbouharoun/first-light">source</a>
+        </footer>
+      </aside>
+
+      <main class="stage">
+        <div class="sheet" id="sheet">
+          <canvas id="poster" aria-label="Poster preview"></canvas>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
