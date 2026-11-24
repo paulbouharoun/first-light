@@ -4,6 +4,7 @@ import '@fontsource/im-fell-english-sc/400.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import './styles.css';
 
+import { track } from './analytics';
 import { renderPoster, PAGE_W } from './render/poster';
 import { THEMES } from './render/themes';
 import { formatLat, formatLon } from './sky/format';
@@ -69,6 +70,16 @@ function update(patch: Partial<State>) {
   schedule();
 }
 
+// ---------------------------------------------------------------- telemetry
+
+// "The visitor made their own sky": the first change of moment or place, once per visit.
+let generated = false;
+function markGenerated(trigger: 'date' | 'time' | 'place') {
+  if (generated) return;
+  generated = true;
+  track('poster_generated', { trigger });
+}
+
 // ---------------------------------------------------------------- form
 
 function syncForm() {
@@ -108,8 +119,16 @@ function renderThemes() {
   );
 }
 
-els.date.addEventListener('input', () => els.date.value && update({ date: els.date.value }));
-els.time.addEventListener('input', () => els.time.value && update({ time: els.time.value }));
+els.date.addEventListener('input', () => {
+  if (!els.date.value) return;
+  update({ date: els.date.value });
+  markGenerated('date');
+});
+els.time.addEventListener('input', () => {
+  if (!els.time.value) return;
+  update({ time: els.time.value });
+  markGenerated('time');
+});
 els.caption.addEventListener('input', () => update({ caption: els.caption.value }));
 els.optConst.addEventListener('change', () => update({ constellations: els.optConst.checked }));
 els.optLabels.addEventListener('change', () => update({ labels: els.optLabels.checked }));
@@ -131,6 +150,7 @@ async function search() {
     els.results.hidden = true;
     update({ ...coords, place: '' });
     els.place.value = '';
+    markGenerated('place');
     return;
   }
   const wait = 1100 - (Date.now() - lastSearch);
@@ -141,9 +161,13 @@ async function search() {
   try {
     const places = await geocode(q);
     showResults(places);
-    if (!places.length) showError('No such place in the gazetteer. Try a nearby town, or type “lat, lon”.');
+    if (!places.length) {
+      showError('No such place in the gazetteer. Try a nearby town, or type “lat, lon”.');
+      track('place_search_failed', { reason: 'no_results' });
+    }
   } catch {
     showError('The gazetteer could not be reached. You can type coordinates instead, e.g. “51.48, -0.0”.');
+    track('place_search_failed', { reason: 'unreachable' });
   } finally {
     els.find.disabled = false;
     els.find.textContent = 'Find';
@@ -178,6 +202,7 @@ function choose(p: Place) {
   els.results.hidden = true;
   els.place.value = p.name;
   update({ lat: p.lat, lon: p.lon, place: p.name });
+  markGenerated('place');
 }
 
 els.find.addEventListener('click', search);
@@ -231,8 +256,17 @@ async function exportPoster() {
     setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
     const dpi = Math.round(used / (PAGE_W / 25.4));
     els.downloadMeta.textContent = `PNG · ${used} × ${Math.round((used * 420) / 297)} px · ${dpi} dpi · saved`;
+    track('poster_downloaded', {
+      theme: THEMES.some((t) => t.id === state.theme) ? state.theme : 'unknown',
+      width_px: used,
+      constellations: state.constellations,
+      labels: state.labels,
+      milky_way: state.milkyWay,
+      grid: state.grid,
+    });
   } catch {
     els.downloadMeta.textContent = 'This browser ran out of canvas memory. Try a desktop browser.';
+    track('poster_export_failed', { reason: 'canvas_memory' });
   } finally {
     els.download.disabled = false;
     els.download.textContent = 'Download A3 print';
