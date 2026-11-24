@@ -2,3 +2,5 @@ node_modules
 dist
 proofs
 .DS_Store
+.vercel
+.env*
